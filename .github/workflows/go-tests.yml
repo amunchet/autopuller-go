@@ -76,11 +76,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 5: Upload the compiled binary to the release
-      - name: Upload Linux AMD64 Binary
-        uses: actions/upload-release-asset@v1
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/autopuller-go
-          asset_name: autopuller-go
-          asset_content_type: application/octet-stream
+          files: dist/autopuller-go
