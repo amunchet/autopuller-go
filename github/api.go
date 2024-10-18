@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,9 +16,15 @@ const masterFile = ".git/refs/heads/master"
 
 // GetMasterSum fetches the latest commit SHA from GitHub for the master branch.
 func GetMasterSum(ctx context.Context) (string, error) {
+
 	url := fmt.Sprintf("https://api.github.com/repos/%s/commits/master", os.Getenv("REPONAME"))
+
+	log.Println(url)
+
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", "token "+os.Getenv("GITHUBKEY"))
+	if githubkey := os.Getenv("GITHUBKEY"); githubkey != "" {
+		req.Header.Set("Authorization", "token "+githubkey)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -36,7 +44,14 @@ func GetMasterSum(ctx context.Context) (string, error) {
 
 // GetCurrentSum reads the current commit SHA from the local file system.
 func GetCurrentSum() (string, error) {
-	data, err := ioutil.ReadFile(masterFile)
+	repoDir := os.Getenv("REPODIR")
+	if err := os.Chdir(repoDir); err != nil {
+		return "", err
+	}
+
+	filename := filepath.FromSlash(masterFile)
+
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return "", err
 	}

@@ -20,7 +20,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load environment variables: %v", err)
 	}
-
 	// Context for Docker and GitHub operations
 	ctx := context.Background()
 
@@ -33,7 +32,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to fetch master commit: %v", err)
 		}
-
+		log.Printf("Current masterSum: %s", masterSum)
 		currentSum, err := github.GetCurrentSum()
 		if err != nil {
 			log.Fatalf("Failed to read current commit: %v", err)
