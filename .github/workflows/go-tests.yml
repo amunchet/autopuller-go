@@ -62,7 +62,7 @@ jobs:
       - name: Build for Linux AMD64
         run: |
           mkdir -p dist
-          GOOS=linux GOARCH=amd64 go build -o dist/autopuller-go ./...
+          GOOS=linux GOARCH=amd64 go build -o dist/autopuller-go ./cmd
 
       # Step 4: Create a release and upload the binary
       - name: Create Release
