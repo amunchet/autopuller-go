@@ -87,6 +87,7 @@ func TestCheckForUpdates_DockerRestartFailure(t *testing.T) {
 		OverrideMasterSum:    "new_sha",
 		OverrideCurrentSum:   "old_sha",
 		OverrideCheckLastRun: true, // Simulate that the last run succeeded
+		FileDifferences:      []string{"test1", "test2"},
 	}
 
 	// Mock DockerManager simulating a service restart failure

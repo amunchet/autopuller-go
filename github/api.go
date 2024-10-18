@@ -146,16 +146,27 @@ func (g *RealGitHubAPI) UpdateCurrentSum(sha string) error {
 
 // CheckDifferences compares two SHAs and returns a list of changed files.
 func (g *RealGitHubAPI) CheckDifferences(ctx context.Context, oldSha, newSha string) ([]string, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/compare/%s...%s", os.Getenv("REPONAME"), oldSha, newSha)
+	// Use GITHUB_URL_PREFIX if set, otherwise default to the GitHub API URL.
+	urlPrefix := os.Getenv("GITHUB_URL_PREFIX")
+	if urlPrefix == "" {
+		urlPrefix = "https://api.github.com/repos/"
+	}
+
+	// Construct the full URL using the prefix and the SHAs.
+	url := fmt.Sprintf("%s%s/compare/%s...%s", urlPrefix, os.Getenv("REPONAME"), oldSha, newSha)
+
+	// Create the HTTP request
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Authorization", "token "+os.Getenv("GITHUBKEY"))
 
+	// Send the request
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	// Decode the JSON response
 	var result struct {
 		Files []struct {
 			Filename string `json:"filename"`
@@ -165,6 +176,7 @@ func (g *RealGitHubAPI) CheckDifferences(ctx context.Context, oldSha, newSha str
 		return nil, err
 	}
 
+	// Collect the filenames of the changed files
 	var diffs []string
 	for _, file := range result.Files {
 		diffs = append(diffs, file.Filename)
@@ -173,10 +185,14 @@ func (g *RealGitHubAPI) CheckDifferences(ctx context.Context, oldSha, newSha str
 	return diffs, nil
 }
 
+// Define function variables that can be overridden in tests
+var chdir = os.Chdir
+var execCommandContext = exec.CommandContext
+
 // RunGitPull runs git-related commands to update the repository.
 func (g *RealGitHubAPI) RunGitPull(ctx context.Context, repoDir string) error {
 	// Change directory to the repoDir
-	if err := os.Chdir(repoDir); err != nil {
+	if err := chdir(repoDir); err != nil {
 		return err
 	}
 
@@ -188,7 +204,7 @@ func (g *RealGitHubAPI) RunGitPull(ctx context.Context, repoDir string) error {
 	}
 
 	for _, cmdArgs := range commands {
-		cmd := exec.CommandContext(ctx, cmdArgs[0], cmdArgs[1:]...)
+		cmd := execCommandContext(ctx, cmdArgs[0], cmdArgs[1:]...)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Printf("Error running command %s: %v", cmdArgs[0], err)
