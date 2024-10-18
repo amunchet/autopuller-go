@@ -89,16 +89,30 @@ func (g *RealGitHubAPI) GetCurrentSum() (string, error) {
 
 // CheckLastRun checks if the last GitHub Actions run for the commit was successful.
 func (g *RealGitHubAPI) CheckLastRun(ctx context.Context, sha string) (bool, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/actions/runs", os.Getenv("REPONAME"))
+	// Define default GitHub API URL prefix
+	defaultURLPrefix := "https://api.github.com/repos/"
+
+	// Check if we have an override for the URL prefix (for testing purposes)
+	urlPrefix := os.Getenv("GITHUB_URL_PREFIX")
+	if urlPrefix == "" {
+		urlPrefix = defaultURLPrefix
+	}
+
+	// Construct the final URL for the GitHub Actions API
+	url := fmt.Sprintf("%s%s/actions/runs", urlPrefix, os.Getenv("REPONAME"))
+
+	// Create a new HTTP GET request
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Authorization", "token "+os.Getenv("GITHUBKEY"))
 
+	// Send the HTTP request and handle errors
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return false, err
 	}
 	defer resp.Body.Close()
 
+	// Parse the response body
 	var result struct {
 		WorkflowRuns []struct {
 			HeadSha    string `json:"head_sha"`
@@ -109,6 +123,7 @@ func (g *RealGitHubAPI) CheckLastRun(ctx context.Context, sha string) (bool, err
 		return false, err
 	}
 
+	// Check if the run corresponding to the given SHA was successful
 	for _, run := range result.WorkflowRuns {
 		if run.HeadSha == sha && run.Conclusion == "success" {
 			return true, nil

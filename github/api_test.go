@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -140,7 +139,6 @@ func TestUpdateCurrentSum_Success(t *testing.T) {
 	}
 }
 
-// Test CheckLastRun with mocked GitHub Actions API.
 func TestCheckLastRun_Success(t *testing.T) {
 	// Set up a fake GitHub API server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -163,10 +161,8 @@ func TestCheckLastRun_Success(t *testing.T) {
 	os.Setenv("REPONAME", "fake-repo")
 	os.Setenv("GITHUBKEY", "fake-key")
 
-	// Override the GitHub API URL with the test server URL
-	originalGitHubAPI := fmt.Sprintf("https://api.github.com/repos/%s/actions/runs", os.Getenv("REPONAME"))
-	overrideGitHubAPI := strings.Replace(originalGitHubAPI, "https://api.github.com", ts.URL, 1)
-	os.Setenv("GITHUB_URL_OVERRIDE", overrideGitHubAPI)
+	// Set the environment variable to override the URL prefix with the test server URL
+	os.Setenv("GITHUB_URL_PREFIX", ts.URL+"/repos/")
 
 	// Create an instance of RealGitHubAPI
 	github := &RealGitHubAPI{}
