@@ -176,3 +176,50 @@ func TestCheckLastRun_Success(t *testing.T) {
 		t.Fatalf("Expected success, but got failure")
 	}
 }
+
+func TestCheckDifferences_Success(t *testing.T) {
+	// Set up a fake GitHub API server
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Verify the request URL
+		if r.URL.Path != "/repos/fake-repo/compare/oldSha...newSha" {
+			t.Errorf("Expected request to '/repos/fake-repo/compare/oldSha...newSha', got '%s'", r.URL.Path)
+		}
+
+		// Respond with a fake list of changed files
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{
+			"files": [
+				{"filename": "file1.txt"},
+				{"filename": "file2.txt"}
+			]
+		}`))
+	}))
+	defer ts.Close()
+
+	// Set environment variables for the test
+	os.Setenv("REPONAME", "fake-repo")
+	os.Setenv("GITHUBKEY", "fake-key")
+
+	// Use the test server's URL as a mock GitHub API endpoint
+	os.Setenv("GITHUB_URL_PREFIX", ts.URL+"/repos/")
+
+	// Create an instance of RealGitHubAPI
+	github := &RealGitHubAPI{}
+
+	// Call CheckDifferences and check the result
+	diffs, err := github.CheckDifferences(context.Background(), "oldSha", "newSha")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Check if the returned list of differences matches the expected output
+	expectedDiffs := []string{"file1.txt", "file2.txt"}
+	if len(diffs) != len(expectedDiffs) {
+		t.Fatalf("Expected %d differences, got %d", len(expectedDiffs), len(diffs))
+	}
+	for i, diff := range diffs {
+		if diff != expectedDiffs[i] {
+			t.Fatalf("Expected difference '%s', got '%s'", expectedDiffs[i], diff)
+		}
+	}
+}

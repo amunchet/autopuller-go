@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"autopuller/docker"
@@ -27,9 +28,26 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 	if masterSum != currentSum {
 		log.Printf("Differences found between master (%s) and current (%s)", masterSum, currentSum)
 
-		// Check if the last GitHub Actions run succeeded
+		// Check if last run was successful
 		if passed, err := gitHub.CheckLastRun(ctx, masterSum); err == nil && passed {
-			log.Println("Last run passed, proceeding with restart...")
+			log.Println("Last run passed, proceeding with update.")
+
+			// Check for file differences
+			diffs, err := gitHub.CheckDifferences(ctx, masterSum, masterSum)
+			if err != nil {
+				return err
+			}
+
+			if len(diffs) == 0 {
+				log.Println("No files changed. Exiting.")
+				return nil
+			}
+
+			// Run git pull to update the repository
+			repoDir := os.Getenv("REPODIR")
+			if err := gitHub.RunGitPull(ctx, repoDir); err != nil {
+				return err
+			}
 
 			// Restart services using Docker Compose
 			err = dockerMgr.RestartServices(ctx)

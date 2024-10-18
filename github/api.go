@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -19,6 +20,8 @@ type GitHubAPI interface {
 	GetCurrentSum() (string, error)
 	CheckLastRun(ctx context.Context, sha string) (bool, error)
 	UpdateCurrentSum(sha string) error
+	CheckDifferences(ctx context.Context, oldSha, newSha string) ([]string, error)
+	RunGitPull(ctx context.Context, repoDir string) error
 }
 
 type RealGitHubAPI struct {
@@ -139,4 +142,61 @@ func (g *RealGitHubAPI) UpdateCurrentSum(sha string) error {
 	var masterFile = filepath.Join(os.Getenv("REPODIR"), ".git/refs/heads/master")
 	log.Println(masterFile)
 	return ioutil.WriteFile(masterFile, []byte(sha), 0644)
+}
+
+// CheckDifferences compares two SHAs and returns a list of changed files.
+func (g *RealGitHubAPI) CheckDifferences(ctx context.Context, oldSha, newSha string) ([]string, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/compare/%s...%s", os.Getenv("REPONAME"), oldSha, newSha)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Authorization", "token "+os.Getenv("GITHUBKEY"))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Files []struct {
+			Filename string `json:"filename"`
+		} `json:"files"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	var diffs []string
+	for _, file := range result.Files {
+		diffs = append(diffs, file.Filename)
+	}
+
+	return diffs, nil
+}
+
+// RunGitPull runs git-related commands to update the repository.
+func (g *RealGitHubAPI) RunGitPull(ctx context.Context, repoDir string) error {
+	// Change directory to the repoDir
+	if err := os.Chdir(repoDir); err != nil {
+		return err
+	}
+
+	// Set git credential helper and safe directory
+	commands := [][]string{
+		{"git", "config", "credential.helper", "store"},
+		{"git", "config", "--global", "--add", "safe.directory", repoDir},
+		{"git", "pull"},
+	}
+
+	for _, cmdArgs := range commands {
+		cmd := exec.CommandContext(ctx, cmdArgs[0], cmdArgs[1:]...)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("Error running command %s: %v", cmdArgs[0], err)
+			log.Printf("Output: %s", output)
+			return fmt.Errorf("failed to run git command: %s", cmdArgs)
+		}
+		log.Printf("Command %s successful: %s", cmdArgs[0], string(output))
+	}
+
+	return nil
 }
