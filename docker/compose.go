@@ -14,9 +14,12 @@ type DockerManager interface {
 
 type RealDockerManager struct{}
 
+// commandContext is a wrapper around exec.CommandContext, allowing it to be mocked in tests.
+var commandContext = exec.CommandContext
+
 // runCommand executes a shell command and logs the output.
 func runCommand(ctx context.Context, name string, args ...string) error {
-	cmd := exec.CommandContext(ctx, name, args...)
+	cmd := commandContext(ctx, name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

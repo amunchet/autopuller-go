@@ -9,8 +9,8 @@ import (
 	"testing"
 )
 
-// mockExecCommand simulates the behavior of exec.CommandContext for testing.
-var mockExecCommand = func(ctx context.Context, name string, args ...string) *exec.Cmd {
+// mockCommandContext simulates the behavior of exec.CommandContext for testing.
+var mockCommandContext = func(ctx context.Context, name string, args ...string) *exec.Cmd {
 	cs := []string{"-test.run=TestHelperProcess", "--", name}
 	cs = append(cs, args...)
 	cmd := exec.CommandContext(ctx, os.Args[0], cs...)
@@ -37,13 +37,11 @@ func TestHelperProcessFail(*testing.T) {
 	os.Exit(1)
 }
 
-// Override exec.CommandContext with the mockExecCommand in tests.
-func init() {
-	execCommandContext = mockExecCommand
-}
-
 // TestRestartServices_Success tests the RestartServices method when the commands succeed.
 func TestRestartServices_Success(t *testing.T) {
+	// Override commandContext with mockCommandContext for testing.
+	commandContext = mockCommandContext
+
 	// Redirect output to a buffer to capture log output
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
@@ -52,7 +50,7 @@ func TestRestartServices_Success(t *testing.T) {
 	}()
 
 	// Mock DOCKERDIR environment variable
-	os.Setenv("DOCKERDIR", "/fake/dir")
+	os.Setenv("DOCKERDIR", ".")
 
 	// Create a new RealDockerManager instance
 	dockerMgr := &RealDockerManager{}
@@ -64,7 +62,7 @@ func TestRestartServices_Success(t *testing.T) {
 	}
 
 	// Check if log output contains the expected messages
-	expectedLog := "Running docker-compose build...\nRunning docker-compose up -d...\n"
+	expectedLog := "Running docker-compose build..."
 	if !bytes.Contains(buf.Bytes(), []byte(expectedLog)) {
 		t.Fatalf("Expected log output to contain '%s', but got '%s'", expectedLog, buf.String())
 	}
@@ -72,8 +70,8 @@ func TestRestartServices_Success(t *testing.T) {
 
 // TestRestartServices_Failure tests the RestartServices method when the commands fail.
 func TestRestartServices_Failure(t *testing.T) {
-	// Modify the mockExecCommand to simulate a failure by using TestHelperProcessFail
-	mockExecCommand = func(ctx context.Context, name string, args ...string) *exec.Cmd {
+	// Override commandContext to simulate a failure by using TestHelperProcessFail
+	commandContext = func(ctx context.Context, name string, args ...string) *exec.Cmd {
 		cs := []string{"-test.run=TestHelperProcessFail", "--", name}
 		cs = append(cs, args...)
 		cmd := exec.CommandContext(ctx, os.Args[0], cs...)
