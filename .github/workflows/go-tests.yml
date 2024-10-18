@@ -1,10 +1,11 @@
-name: Go Test
+name: Go Test and Release
 
 on:
-  push:   # Triggers on push to any branch
-  pull_request:   # Triggers on pull request to any branch
+  push:
+  pull_request:   # Trigger on any pull request
 
 jobs:
+  # Job 1: Run Go Tests (Shared by all triggers)
   test:
     name: Run Go Tests
     runs-on: ubuntu-latest
@@ -39,6 +40,47 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-      # Optional Step 6: Check for Go formatting (best practice)
-      - name: Check Go formatting
-        run: go fmt ./...
+  # Job 2: Build and Release (only if tests pass and a tag is pushed)
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    needs: test  # This ensures Job 2 only runs if Job 1 (test) succeeds
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')  # Only run for tag pushes
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Go
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19'
+
+      # Step 3: Compile the binary for Linux AMD64
+      - name: Build for Linux AMD64
+        run: |
+          mkdir -p dist
+          GOOS=linux GOARCH=amd64 go build -o dist/autopuller-go ./...
+
+      # Step 4: Create a release and upload the binary
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}  # This is the tag that triggered the workflow
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 5: Upload the compiled binary to the release
+      - name: Upload Linux AMD64 Binary
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/autopuller-go
+          asset_name: autopuller-go
+          asset_content_type: application/octet-stream
