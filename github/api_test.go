@@ -13,10 +13,11 @@ import (
 )
 
 // Mock HTTP client using httptest to simulate GitHub API responses.
+
 func TestGetMasterSum_Success(t *testing.T) {
 	// Set up a fake GitHub API server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/repos/fake-repo/commits/master" {
+		if r.URL.Path != "/fake-repo/commits/master" {
 			t.Errorf("Expected request to '/repos/fake-repo/commits/master', got '%s'", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -25,13 +26,11 @@ func TestGetMasterSum_Success(t *testing.T) {
 	defer ts.Close()
 
 	// Set environment variables
-	os.Setenv("REPONAME", "fake-repo")
-	os.Setenv("GITHUBKEY", "fake-key")
+	os.Setenv("REPONAME", "fake-repo") // Mock the repository name
+	os.Setenv("GITHUBKEY", "fake-key") // Mock the GitHub API key
 
-	// Override the GitHub API URL with the test server URL
-	originalGitHubAPI := fmt.Sprintf("https://api.github.com/repos/%s/commits/master", os.Getenv("REPONAME"))
-	overrideGitHubAPI := strings.Replace(originalGitHubAPI, "https://api.github.com", ts.URL, 1)
-	os.Setenv("GITHUB_URL_OVERRIDE", overrideGitHubAPI)
+	// Set the environment variable to override the URL prefix with the test server URL
+	os.Setenv("GITHUB_URL_PREFIX", ts.URL)
 
 	// Create an instance of RealGitHubAPI
 	github := &RealGitHubAPI{}
@@ -57,10 +56,8 @@ func TestGetMasterSum_Failure(t *testing.T) {
 	os.Setenv("REPONAME", "fake-repo")
 	os.Setenv("GITHUBKEY", "fake-key")
 
-	// Override the GitHub API URL with the test server URL
-	originalGitHubAPI := fmt.Sprintf("https://api.github.com/repos/%s/commits/master", os.Getenv("REPONAME"))
-	overrideGitHubAPI := strings.Replace(originalGitHubAPI, "https://api.github.com", ts.URL, 1)
-	os.Setenv("GITHUB_URL_OVERRIDE", overrideGitHubAPI)
+	// Set the environment variable to override the URL prefix with the test server URL
+	os.Setenv("GITHUB_URL_PREFIX", ts.URL)
 
 	// Create an instance of RealGitHubAPI
 	github := &RealGitHubAPI{}
@@ -104,36 +101,42 @@ func TestGetCurrentSum_Success(t *testing.T) {
 
 // Test UpdateCurrentSum by mocking file system operations.
 func TestUpdateCurrentSum_Success(t *testing.T) {
-	// Manually create a temporary directory
+	// Manually create a temporary directory to mock the repository
 	repoDir, err := ioutil.TempDir("", "repo")
 	if err != nil {
 		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
 	defer os.RemoveAll(repoDir) // Clean up after the test
 
-	// Mock REPODIR environment variable
+	// Mock the REPODIR environment variable to point to the temporary directory
 	os.Setenv("REPODIR", repoDir)
 
-	// Create a fake master file path
+	// Define the master file path
 	masterFile := filepath.Join(repoDir, ".git/refs/heads/master")
-	os.MkdirAll(filepath.Dir(masterFile), 0755)
+
+	// Create only the directory structure up to the base path (if necessary)
+	// No need for further subdirectories, since "master" is a plain file
+	err = os.MkdirAll(filepath.Join(repoDir, ".git/refs/heads/"), 0755) // Ensure the repoDir exists
+	if err != nil {
+		t.Fatalf("Failed to create directory for the master file: %v", err)
+	}
 
 	// Create an instance of RealGitHubAPI
 	github := &RealGitHubAPI{}
 
-	// Call UpdateCurrentSum to write a new SHA to the master file
-	err = github.UpdateCurrentSum("new-fake-sha")
+	// Call UpdateCurrentSum to write "testsha" to the master file
+	err = github.UpdateCurrentSum("testsha")
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	// Verify that the file contains the new SHA
+	// Verify that the master file contains the new SHA ("testsha")
 	data, err := ioutil.ReadFile(masterFile)
 	if err != nil {
 		t.Fatalf("Expected no error reading the file, got %v", err)
 	}
-	if strings.TrimSpace(string(data)) != "new-fake-sha" {
-		t.Fatalf("Expected SHA 'new-fake-sha', got '%s'", strings.TrimSpace(string(data)))
+	if strings.TrimSpace(string(data)) != "testsha" {
+		t.Fatalf("Expected SHA 'testsha', got '%s'", strings.TrimSpace(string(data)))
 	}
 }
 
