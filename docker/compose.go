@@ -19,6 +19,7 @@ var commandContext = exec.CommandContext
 
 // runCommand executes a shell command and logs the output.
 func runCommand(ctx context.Context, name string, args ...string) error {
+
 	cmd := commandContext(ctx, name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -39,10 +40,10 @@ func (d *RealDockerManager) RestartServices(ctx context.Context) error {
 	}
 
 	log.Println("Running docker-compose build...")
-	if err := runCommand(ctx, "docker-compose", "build"); err != nil {
+	if err := runCommand(ctx, "bash", "-c", "docker-compose build"); err != nil {
 		return err
 	}
 
 	log.Println("Running docker-compose up -d...")
-	return runCommand(ctx, "docker-compose", "up", "-d")
+	return runCommand(ctx, "bash", "-c", "docker-compose up -d")
 }

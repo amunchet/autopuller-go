@@ -34,7 +34,7 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 			log.Println("Last run passed, proceeding with update.")
 
 			// Check for file differences
-			diffs, err := gitHub.CheckDifferences(ctx, masterSum, masterSum)
+			diffs, err := gitHub.CheckDifferences(ctx, currentSum, masterSum)
 			if err != nil {
 				return err
 			}
@@ -56,11 +56,7 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 				return err
 			}
 
-			// Update the local record of the latest commit
-			err = gitHub.UpdateCurrentSum(masterSum)
-			if err != nil {
-				return err
-			}
+			
 		} else {
 			log.Println("Last run failed or not completed yet. Skipping restart.")
 		}

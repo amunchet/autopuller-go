@@ -19,7 +19,6 @@ type GitHubAPI interface {
 	GetMasterSum(ctx context.Context) (string, error)
 	GetCurrentSum() (string, error)
 	CheckLastRun(ctx context.Context, sha string) (bool, error)
-	UpdateCurrentSum(sha string) error
 	CheckDifferences(ctx context.Context, oldSha, newSha string) ([]string, error)
 	RunGitPull(ctx context.Context, repoDir string) error
 }
@@ -100,20 +99,28 @@ func (g *RealGitHubAPI) CheckLastRun(ctx context.Context, sha string) (bool, err
 	if urlPrefix == "" {
 		urlPrefix = defaultURLPrefix
 	}
-
 	// Construct the final URL for the GitHub Actions API
 	url := fmt.Sprintf("%s%s/actions/runs", urlPrefix, os.Getenv("REPONAME"))
 
+	log.Println("URL:", url)
 	// Create a new HTTP GET request
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Authorization", "token "+os.Getenv("GITHUBKEY"))
 
 	// Send the HTTP request and handle errors
 	resp, err := http.DefaultClient.Do(req)
+
 	if err != nil {
+		log.Fatal("HTTP Error:", err)
 		return false, err
 	}
 	defer resp.Body.Close()
+
+	// Check for HTTP OK
+	if resp.StatusCode != 200 {
+		log.Println("Unexpected status code: ", resp.StatusCode)
+		return false, err
+	}
 
 	// Parse the response body
 	var result struct {
@@ -122,26 +129,23 @@ func (g *RealGitHubAPI) CheckLastRun(ctx context.Context, sha string) (bool, err
 			Conclusion string `json:"conclusion"`
 		} `json:"workflow_runs"`
 	}
+
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Fatal("Error:", err)
 		return false, err
 	}
 
 	// Check if the run corresponding to the given SHA was successful
+
 	for _, run := range result.WorkflowRuns {
+
+		log.Println("Run:", run)
 		if run.HeadSha == sha && run.Conclusion == "success" {
 			return true, nil
 		}
 	}
 
 	return false, nil
-}
-
-// UpdateCurrentSum writes the latest commit SHA to the local file system.
-func (g *RealGitHubAPI) UpdateCurrentSum(sha string) error {
-
-	var masterFile = filepath.Join(os.Getenv("REPODIR"), ".git/refs/heads/master")
-	log.Println(masterFile)
-	return ioutil.WriteFile(masterFile, []byte(sha), 0644)
 }
 
 // CheckDifferences compares two SHAs and returns a list of changed files.
@@ -155,6 +159,8 @@ func (g *RealGitHubAPI) CheckDifferences(ctx context.Context, oldSha, newSha str
 	// Construct the full URL using the prefix and the SHAs.
 	url := fmt.Sprintf("%s%s/compare/%s...%s", urlPrefix, os.Getenv("REPONAME"), oldSha, newSha)
 
+	log.Println("CheckDifferences URL:", url)
+
 	// Create the HTTP request
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Authorization", "token "+os.Getenv("GITHUBKEY"))
@@ -165,6 +171,12 @@ func (g *RealGitHubAPI) CheckDifferences(ctx context.Context, oldSha, newSha str
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	// Check for HTTP OK
+	if resp.StatusCode != 200 {
+		log.Println("Unexpected status code: ", resp.StatusCode)
+		return nil, err
+	}
 
 	// Decode the JSON response
 	var result struct {

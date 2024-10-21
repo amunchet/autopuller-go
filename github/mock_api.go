@@ -44,14 +44,6 @@ func (m *MockGitHubAPI) CheckLastRun(ctx context.Context, sha string) (bool, err
 	return m.OverrideCheckLastRun, nil
 }
 
-// UpdateCurrentSum simulates updating the current commit SHA in the local file system.
-func (m *MockGitHubAPI) UpdateCurrentSum(sha string) error {
-	if m.ShouldFailUpdateSum {
-		return errors.New("failed to update current sum")
-	}
-	return nil
-}
-
 // CheckDifferences simulates checking for file differences between two SHAs.
 func (m *MockGitHubAPI) CheckDifferences(ctx context.Context, oldSha, newSha string) ([]string, error) {
 	if m.ShouldFailCheckDifferences {
