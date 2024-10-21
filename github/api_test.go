@@ -29,7 +29,7 @@ func TestGetMasterSum_Success(t *testing.T) {
 	os.Setenv("GITHUBKEY", "fake-key") // Mock the GitHub API key
 
 	// Set the environment variable to override the URL prefix with the test server URL
-	os.Setenv("GITHUB_URL_PREFIX", ts.URL)
+	os.Setenv("GITHUB_URL_PREFIX", ts.URL+"/")
 
 	// Create an instance of RealGitHubAPI
 	github := &RealGitHubAPI{}
@@ -56,7 +56,7 @@ func TestGetMasterSum_Failure(t *testing.T) {
 	os.Setenv("GITHUBKEY", "fake-key")
 
 	// Set the environment variable to override the URL prefix with the test server URL
-	os.Setenv("GITHUB_URL_PREFIX", ts.URL)
+	os.Setenv("GITHUB_URL_PREFIX", ts.URL+"/")
 
 	// Create an instance of RealGitHubAPI
 	github := &RealGitHubAPI{}
