@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -71,6 +70,23 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 func main() {
 
 	for _, arg := range os.Args {
+		if strings.Contains(arg, "help") {
+			log.Println("Valid arguments:")
+			log.Println("\t[Nothing] - starts up the autopuller")
+			log.Println("\thelp - this message")
+			log.Println("\tsystemd- generates the systemd file")
+			log.Println("\tenv - generates the sample env file")
+			return
+		}
+		if strings.Contains(arg, "env") {
+			log.Println("Generating env sample file...")
+			err := GenerateEnvSample()
+			if err != nil {
+				log.Fatalf("Error: %v\n", err)
+			}
+			return
+
+		}
 		if strings.Contains(arg, "systemd") {
 			log.Println("Generating systemd file...")
 			log.Println("\tRemember to run `sudo systemctl daemon-reload`")
@@ -78,10 +94,11 @@ func main() {
 			log.Println("\tTo start the service: `sudo systemctl start autopuller`")
 			err := GenerateSystemdService("autopuller", "root")
 			if err != nil {
-				fmt.Printf("Error: %v\n", err)
+				log.Fatalf("Error: %v\n", err)
 			}
 			return
 		}
+
 	}
 
 	// Initialize logger
