@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"autopuller/docker"
@@ -67,6 +69,21 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 }
 
 func main() {
+
+	for _, arg := range os.Args {
+		if strings.Contains(arg, "systemd") {
+			log.Println("Generating systemd file...")
+			log.Println("\tRemember to run `sudo systemctl daemon-reload`")
+			log.Println("\tTo enable the service: `sudo systemctl enable autopuller`")
+			log.Println("\tTo start the service: `sudo systemctl start autopuller`")
+			err := GenerateSystemdService("autopuller", "root")
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+			}
+			return
+		}
+	}
+
 	// Initialize logger
 	logger.InitLogger("autopuller.log")
 
