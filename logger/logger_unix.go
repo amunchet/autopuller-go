@@ -11,17 +11,17 @@ import (
 )
 
 // InitLogger sets up the logger to write to stdout, a log file, and syslog (on Unix).
-func InitLogger(logFilePath string) {
+func InitLogger(logFilePath string) error {
 	// Create or open a log file
 	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatalf("Failed to open log file: %v", err)
+		return err
 	}
 
 	// Set up syslog
 	sysLog, err := syslog.New(syslog.LOG_INFO|syslog.LOG_LOCAL0, "my-app")
 	if err != nil {
-		log.Fatalf("Failed to connect to syslog: %v", err)
+		return err
 	}
 
 	// Combine stdout, the log file, and syslog as the output destinations
@@ -35,4 +35,6 @@ func InitLogger(logFilePath string) {
 
 	// Example log entry
 	log.Println("Logger initialized (Unix)")
+
+	return nil
 }
