@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"autopuller/docker"
+	"autopuller/env"
 	"autopuller/github"
 	"autopuller/logger"
 )
@@ -73,6 +74,11 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 func main() {
 	// Initialize logger
 	logger.InitLogger()
+
+	// Load Dot Env
+	if err := env.LoadEnv(); err != nil {
+		log.Fatalf("Error loading ENV: %v", err)
+	}
 
 	// Context for Docker and GitHub operations
 	ctx := context.Background()
