@@ -2,7 +2,7 @@
 # Autopuller-Go
 Rewrite of the Autopuller project in Go.  This moves away from the Docker implementation and handles things simply in Go.
 
-Overall process:
+## Overall process
 1. Check if there is a new commit to the master branch of a given repo
 2. If there is, check if the tests have passed (Github actions)
 3. If they have, then git pull
