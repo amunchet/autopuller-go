@@ -56,7 +56,6 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 				return err
 			}
 
-			
 		} else {
 			log.Println("Last run failed or not completed yet. Skipping restart.")
 		}
@@ -69,7 +68,7 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 
 func main() {
 	// Initialize logger
-	logger.InitLogger()
+	logger.InitLogger("autopuller.log")
 
 	// Load Dot Env
 	if err := env.LoadEnv(); err != nil {

@@ -23,7 +23,7 @@ func TestInitLogger_Unix(t *testing.T) {
 	log.SetOutput(tempFile)
 
 	// Initialize the logger (this includes syslog and file logging)
-	InitLogger()
+	InitLogger("application.log")
 
 	// Check if the log file contains the initialization message
 	content, err := ioutil.ReadFile(tempFile.Name())

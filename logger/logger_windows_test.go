@@ -26,11 +26,8 @@ func TestInitLogger_Windows(t *testing.T) {
 	}
 	defer os.Remove(tempFile.Name()) // Clean up
 
-	// Override log output to the temporary file
-	log.SetOutput(tempFile)
-
 	// Initialize the logger (this excludes syslog)
-	InitLogger()
+	InitLogger(tempFile.Name())
 
 	// Check if the log file contains the initialization message
 	content, err := ioutil.ReadFile(tempFile.Name())
