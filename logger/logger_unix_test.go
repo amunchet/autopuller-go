@@ -5,6 +5,7 @@ package logger
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"testing"
@@ -40,6 +41,8 @@ func TestInitLogger_Unix(t *testing.T) {
 	}
 
 	// Check if the log contains the initialization message
+	log.Println(content)
+	log.Println(string(content))
 	if !contains(content, "Logger initialized (Unix)") {
 		t.Fatalf("Expected 'Logger initialized (Unix)' in log, but it was not found")
 	}
