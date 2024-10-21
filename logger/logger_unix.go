@@ -19,7 +19,7 @@ func InitLogger(logFilePath string) error {
 	}
 
 	// Set up syslog
-	sysLog, err := syslog.New(syslog.LOG_INFO|syslog.LOG_LOCAL0, "my-app")
+	sysLog, err := syslog.New(syslog.LOG_INFO|syslog.LOG_LOCAL0, "autopuller")
 	if err != nil {
 		return err
 	}
