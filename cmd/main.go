@@ -61,7 +61,7 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 			log.Println("Last run failed or not completed yet. Skipping restart.")
 		}
 	} else {
-		log.Println("No differences found. Nothing to do.")
+		//log.Println("No differences found. Nothing to do.")
 	}
 
 	return nil
@@ -125,7 +125,7 @@ func main() {
 
 		// Sleep between checks
 		interval := 60 // Hardcoded for simplicity, you can load this from env if needed
-		log.Printf("Sleeping for %d seconds...", interval)
+		//log.Printf("Sleeping for %d seconds...", interval)
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }
