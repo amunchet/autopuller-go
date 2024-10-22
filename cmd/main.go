@@ -111,6 +111,8 @@ func main() {
 
 	}
 
+	log.Println(version)
+
 	// Initialize logger
 	logger.InitLogger("autopuller.log")
 
