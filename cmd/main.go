@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -69,15 +68,7 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 	return nil
 }
 
-func getLatestGitTag(ctx context.Context) (string, error) {
-	// Execute the command to get the latest Git tag
-	cmd := exec.CommandContext(ctx, "git", "describe", "--tags", "--abbrev=0")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return string(output), nil
-}
+var version = "dev"
 
 func main() {
 
@@ -114,14 +105,7 @@ func main() {
 		}
 
 		if strings.Contains(arg, "version") {
-			ctx := context.Background()
-			tag, err := getLatestGitTag(ctx)
-			if err != nil {
-				log.Fatalf("Failed to get the latest Git tag: %v", err)
-			}
-
-			// Print the latest tag
-			fmt.Printf("%s\n", tag)
+			fmt.Printf("%s\n", version)
 			return
 		}
 
