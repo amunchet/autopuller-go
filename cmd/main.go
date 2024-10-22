@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -67,19 +69,31 @@ func checkForUpdates(ctx context.Context, gitHub github.GitHubAPI, dockerMgr doc
 	return nil
 }
 
+func getLatestGitTag(ctx context.Context) (string, error) {
+	// Execute the command to get the latest Git tag
+	cmd := exec.CommandContext(ctx, "git", "describe", "--tags", "--abbrev=0")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
+}
+
 func main() {
 
 	for _, arg := range os.Args {
 		if strings.Contains(arg, "help") {
-			log.Println("Valid arguments:")
-			log.Println("\t[Nothing] - starts up the autopuller")
-			log.Println("\thelp - this message")
-			log.Println("\tsystemd- generates the systemd file")
-			log.Println("\tenv - generates the sample env file")
+			fmt.Println("Valid arguments:")
+			fmt.Println("-----------------")
+			fmt.Println(" [Nothing] - starts up the autopuller")
+			fmt.Println(" help - this message")
+			fmt.Println(" systemd - generates the systemd file")
+			fmt.Println(" env - generates the sample env file")
+			fmt.Println(" version - lists the build version")
 			return
 		}
 		if strings.Contains(arg, "env") {
-			log.Println("Generating env sample file...")
+			fmt.Println("Generating env sample file...")
 			err := GenerateEnvSample()
 			if err != nil {
 				log.Fatalf("Error: %v\n", err)
@@ -88,14 +102,26 @@ func main() {
 
 		}
 		if strings.Contains(arg, "systemd") {
-			log.Println("Generating systemd file...")
-			log.Println("\tRemember to run `sudo systemctl daemon-reload`")
-			log.Println("\tTo enable the service: `sudo systemctl enable autopuller`")
-			log.Println("\tTo start the service: `sudo systemctl start autopuller`")
+			fmt.Println("Generating systemd file...")
+			fmt.Println(" Remember to run `sudo systemctl daemon-reload`")
+			fmt.Println(" To enable the service: `sudo systemctl enable autopuller`")
+			fmt.Println(" To start the service: `sudo systemctl start autopuller`")
 			err := GenerateSystemdService("autopuller", "root")
 			if err != nil {
 				log.Fatalf("Error: %v\n", err)
 			}
+			return
+		}
+
+		if strings.Contains(arg, "version") {
+			ctx := context.Background()
+			tag, err := getLatestGitTag(ctx)
+			if err != nil {
+				log.Fatalf("Failed to get the latest Git tag: %v", err)
+			}
+
+			// Print the latest tag
+			fmt.Printf("%s\n", tag)
 			return
 		}
 
