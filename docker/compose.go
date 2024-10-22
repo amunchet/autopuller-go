@@ -45,5 +45,13 @@ func (d *RealDockerManager) RestartServices(ctx context.Context) error {
 	}
 
 	log.Println("Running docker-compose up -d...")
-	return runCommand(ctx, "bash", "-c", "docker-compose up -d")
+	if err := runCommand(ctx, "bash", "-c", "docker-compose up -d"); err != nil {
+		return err
+	}
+	log.Println("Running docker-compose restart")
+
+	if err := runCommand(ctx, "bash", "-c", "docker-compose restart"); err != nil {
+		return err
+	}
+	return nil
 }
