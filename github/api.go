@@ -46,7 +46,7 @@ func (g *RealGitHubAPI) GetMasterSum(ctx context.Context) (string, error) {
 	// Construct the final URL using the prefix and repository name
 	url := fmt.Sprintf("%s%s/commits/master", urlPrefix, repoName)
 
-	log.Println("Request URL:", url)
+	//log.Println("Request URL:", url)
 
 	// Prepare the request
 	req, _ := http.NewRequest("GET", url, nil)

@@ -6,7 +6,6 @@ package logger
 import (
 	"io"
 	"log"
-	"log/syslog"
 	"os"
 )
 
@@ -19,13 +18,16 @@ func InitLogger(logFilePath string) error {
 	}
 
 	// Set up syslog
-	sysLog, err := syslog.New(syslog.LOG_INFO|syslog.LOG_LOCAL0, "autopuller")
-	if err != nil {
-		return err
-	}
+	/*
+		sysLog, err := syslog.New(syslog.LOG_INFO|syslog.LOG_LOCAL0, "autopuller")
+		if err != nil {
+			return err
+		}
+	*/
 
 	// Combine stdout, the log file, and syslog as the output destinations
-	multiWriter := io.MultiWriter(os.Stdout, logFile, sysLog)
+	//multiWriter := io.MultiWriter(os.Stdout, logFile, sysLog)
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
 
 	// Set the log output to multiWriter
 	log.SetOutput(multiWriter)
