@@ -52,7 +52,7 @@ func (d *RealDockerManager) RestartServices(ctx context.Context) error {
 		return err
 	}
 
-	log.Printf("Running %s up -d...\n", dockercommand)
+	log.Printf("Running %s start...\n", dockercommand)
 	if err := runCommand(ctx, "bash", "-c", dockercommand+" start"); err != nil {
 		return err
 	}
