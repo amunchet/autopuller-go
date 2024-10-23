@@ -40,17 +40,25 @@ func (d *RealDockerManager) RestartServices(ctx context.Context) error {
 	}
 
 	log.Println("Running docker-compose build...")
-	if err := runCommand(ctx, "bash", "-c", "docker-compose build"); err != nil {
+
+	// Load in if there's a docker override
+
+	dockercommand := os.Getenv("DOCKERCOMMAND")
+	if dockercommand == "" {
+		dockercommand = "docker-compose"
+	}
+
+	if err := runCommand(ctx, "bash", "-c", dockercommand+" build"); err != nil {
 		return err
 	}
 
 	log.Println("Running docker-compose up -d...")
-	if err := runCommand(ctx, "bash", "-c", "docker-compose up -d"); err != nil {
+	if err := runCommand(ctx, "bash", "-c", dockercommand+" up -d"); err != nil {
 		return err
 	}
 	log.Println("Running docker-compose restart")
 
-	if err := runCommand(ctx, "bash", "-c", "docker-compose restart"); err != nil {
+	if err := runCommand(ctx, "bash", "-c", dockercommand+" restart"); err != nil {
 		return err
 	}
 	return nil
