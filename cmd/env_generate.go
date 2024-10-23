@@ -27,6 +27,10 @@ DOCKERDIR=./docker/sample
 # Interval in seconds between checks for new commits (default: 60 seconds)
 INTERVAL=60
 
+
+# Docker Compose command: override the default "docker-compose" (e.g. "docker compose")
+DOCKERCOMMAND=docker-compose
+
 # Optional: Command for sending email notifications (default: 'mail -s')
 SENDMAIL_CMD=mail -s
 
@@ -65,4 +69,3 @@ func GenerateEnvSample() error {
 	fmt.Printf(".env.sample file created at: %s\n", filePath)
 	return nil
 }
-
